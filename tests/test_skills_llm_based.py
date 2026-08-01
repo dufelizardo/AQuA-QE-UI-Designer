@@ -495,6 +495,30 @@ def test_review_ui_specification_uses_review_model_and_maps_result(monkeypatch):
     assert captured["model"] == "phi4"
 
 
+def test_review_ui_specification_inclui_catalogo_real_no_prompt(monkeypatch):
+    """Regressão (achado ao vivo, Groq/llama-3.3-70b-versatile): o revisor LLM alucinou que
+    'Search Bar' e 'Progress Indicators' não existiam no catálogo Material Design 3 — ambos
+    existem, mas o prompt nunca enviava o catálogo real, então o modelo julgava pelo próprio
+    conhecimento (errado) em vez da lista de verdade desta plataforma. O prompt agora precisa
+    conter o catálogo literal."""
+    captured = {}
+
+    def fake_complete_json(prompt, system="", model=None):
+        captured["prompt"] = prompt
+        return {"aprovado": True, "problemas": []}
+
+    monkeypatch.setattr(review_ui_specification_module, "complete_json", fake_complete_json)
+
+    spec = _spec(
+        screens=[UIScreen(name="Tela", components=["Search Bar"], states=["hover"])],
+        accessibility_recommendations=["verificar contraste"],
+    )
+    review_ui_specification_module.review_ui_specification(spec)
+
+    assert "Search Bar" in captured["prompt"]
+    assert "Progress Indicators" in captured["prompt"]
+
+
 def test_review_ui_specification_reprova_componente_fora_do_catalogo_mesmo_se_llm_aprovar(
     monkeypatch,
 ):

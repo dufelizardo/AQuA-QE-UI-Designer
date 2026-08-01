@@ -158,7 +158,7 @@
 
 ## review_ui_specification
 
-- **Descrição**: revisa a UI Specification com um LLM diferente do gerador, combinado com uma checagem determinística (Python puro) que garante GR-UI-1 mesmo se o LLM revisor não perceber um componente inválido. Verifica também se todo componente identificado tem estados definidos e se há recomendação de acessibilidade associada às telas.
+- **Descrição**: revisa a UI Specification com um LLM diferente do gerador, combinado com uma checagem determinística (Python puro) que garante GR-UI-1 mesmo se o LLM revisor não perceber um componente inválido. O catálogo fechado Material Design 3 é enviado literalmente no prompt do revisor (achado ao vivo: sem isso, o LLM julga por conhecimento geral e alucina que componentes reais do catálogo — ex. "Search Bar", "Progress Indicators" — não existem nele). Verifica também se todo componente identificado tem estados definidos (nível de tela é aceito nesta fase) e se há recomendação de acessibilidade associada às telas.
 - **Entrada**: `spec: UISpecification`.
 - **Saída**: `dict` (`aprovado: bool`, `problemas: list[str]`).
 - **Efeitos colaterais**: chamada ao LLM revisor.
