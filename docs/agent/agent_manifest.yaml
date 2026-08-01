@@ -35,6 +35,8 @@ skills:
   - suggest_design_tokens
   - define_responsive_layout
   - review_accessibility_visual
+  - draft_empty_and_error_states
+  - draft_interface_messages
   - validate_ui_specification
   - review_ui_specification
   - generate_ui_clarifying_questions

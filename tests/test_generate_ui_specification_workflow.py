@@ -1,6 +1,9 @@
 from aqua_qe_ui_designer.models import (
     ArtifactStatus,
+    ComponentSpec,
     DesignTokensSuggestion,
+    PrioritizedRecommendation,
+    StateSpec,
     UIScreen,
     UISpecification,
 )
@@ -14,7 +17,13 @@ def _stub_geracao(monkeypatch, com_componentes=True, com_acessibilidade=True):
         lambda texto_uxs: {"title": "titulo", "context_problem": "contexto"},
     )
     telas = (
-        [UIScreen(name="Tela", components=["Cards"], source_reference="f")]
+        [
+            UIScreen(
+                name="Tela",
+                components=[ComponentSpec(name="Cards", icon="calendar_today")],
+                source_reference="f",
+            )
+        ]
         if com_componentes
         else [UIScreen(name="Tela", components=[], source_reference="f")]
     )
@@ -25,7 +34,7 @@ def _stub_geracao(monkeypatch, com_componentes=True, com_acessibilidade=True):
     def fake_define_component_states(screens):
         for tela in screens:
             if tela.components:
-                tela.states = ["hover", "disabled"]
+                tela.states = [StateSpec(name="hover"), StateSpec(name="disabled")]
         return screens
 
     monkeypatch.setattr(workflow_module, "define_component_states", fake_define_component_states)
@@ -43,6 +52,16 @@ def _stub_geracao(monkeypatch, com_componentes=True, com_acessibilidade=True):
         workflow_module,
         "review_accessibility_visual",
         lambda screens: (["verificar contraste"] if com_acessibilidade else []),
+    )
+    monkeypatch.setattr(
+        workflow_module,
+        "draft_empty_and_error_states",
+        lambda texto_uxs, tela_nome, contexto: (["nenhum item encontrado"], ["erro ao carregar"]),
+    )
+    monkeypatch.setattr(
+        workflow_module,
+        "draft_interface_messages",
+        lambda texto_uxs, contexto: ["deseja realmente cancelar?"],
     )
 
 
@@ -63,12 +82,160 @@ def test_generate_ui_specification_happy_path_marks_draft_validated_when_review_
     assert spec.status == ArtifactStatus.DRAFT_VALIDATED
     assert spec.title == "titulo"
     assert spec.screens[0].name == "Tela"
-    assert spec.screens[0].states == ["hover", "disabled"]
+    assert spec.screens[0].states == [StateSpec(name="hover"), StateSpec(name="disabled")]
     assert spec.design_tokens.colors == ["primary: azul"]
     assert spec.responsive_notes == "compact/medium/expanded"
     assert spec.accessibility_recommendations == ["verificar contraste"]
     assert spec.review_notes == []
     assert spec.uxs_reference == "https://example.atlassian.net/wiki/pages/1"
+
+
+def test_generate_ui_specification_populates_empty_and_error_states_per_screen(monkeypatch):
+    _stub_geracao(monkeypatch)
+    monkeypatch.setattr(
+        workflow_module,
+        "review_ui_specification",
+        lambda spec: {"aprovado": True, "problemas": []},
+    )
+
+    spec = workflow_module.generate_ui_specification("uxs")
+
+    assert spec.screens[0].empty_states == ["nenhum item encontrado"]
+    assert spec.screens[0].error_states == ["erro ao carregar"]
+
+
+def test_generate_ui_specification_populates_interface_messages(monkeypatch):
+    _stub_geracao(monkeypatch)
+    monkeypatch.setattr(
+        workflow_module,
+        "review_ui_specification",
+        lambda spec: {"aprovado": True, "problemas": []},
+    )
+
+    spec = workflow_module.generate_ui_specification("uxs")
+
+    assert spec.interface_messages == ["deseja realmente cancelar?"]
+
+
+def test_generate_ui_specification_builds_navigation_sequence_in_pure_python(monkeypatch):
+    """GR-UI-8: navigation_sequence é sempre [tela.name for tela in screens], nunca uma nova
+    derivação de fluxo."""
+    monkeypatch.setattr(
+        workflow_module,
+        "extract_ui_context",
+        lambda texto_uxs: {"title": "titulo", "context_problem": "contexto"},
+    )
+    telas = [
+        UIScreen(name="Tela A", components=[ComponentSpec(name="Cards")], source_reference="f"),
+        UIScreen(name="Tela B", components=[ComponentSpec(name="Cards")], source_reference="f"),
+    ]
+    monkeypatch.setattr(
+        workflow_module, "identify_screens_and_components", lambda texto_uxs, contexto: telas
+    )
+    monkeypatch.setattr(
+        workflow_module,
+        "define_component_states",
+        lambda screens: screens,
+    )
+    monkeypatch.setattr(
+        workflow_module,
+        "suggest_design_tokens",
+        lambda texto_uxs, contexto: DesignTokensSuggestion(colors=["primary: azul"]),
+    )
+    monkeypatch.setattr(
+        workflow_module, "define_responsive_layout", lambda texto_uxs, contexto: "notas"
+    )
+    monkeypatch.setattr(
+        workflow_module, "review_accessibility_visual", lambda screens: ["verificar contraste"]
+    )
+    monkeypatch.setattr(
+        workflow_module,
+        "draft_empty_and_error_states",
+        lambda texto_uxs, tela_nome, contexto: ([], []),
+    )
+    monkeypatch.setattr(workflow_module, "draft_interface_messages", lambda texto_uxs, contexto: [])
+    monkeypatch.setattr(
+        workflow_module,
+        "review_ui_specification",
+        lambda spec: {"aprovado": True, "problemas": []},
+    )
+
+    spec = workflow_module.generate_ui_specification("uxs")
+
+    assert spec.navigation_sequence == ["Tela A", "Tela B"]
+
+
+def test_generate_ui_specification_builds_deduped_icons_in_pure_python(monkeypatch):
+    monkeypatch.setattr(
+        workflow_module,
+        "extract_ui_context",
+        lambda texto_uxs: {"title": "titulo", "context_problem": "contexto"},
+    )
+    telas = [
+        UIScreen(
+            name="Tela A",
+            components=[
+                ComponentSpec(name="Cards", icon="calendar_today"),
+                ComponentSpec(name="Buttons", icon="add"),
+            ],
+            source_reference="f",
+        ),
+        UIScreen(
+            name="Tela B",
+            components=[
+                ComponentSpec(name="Cards", icon="calendar_today"),
+                ComponentSpec(name="Chips", icon=""),
+            ],
+            source_reference="f",
+        ),
+    ]
+    monkeypatch.setattr(
+        workflow_module, "identify_screens_and_components", lambda texto_uxs, contexto: telas
+    )
+    monkeypatch.setattr(workflow_module, "define_component_states", lambda screens: screens)
+    monkeypatch.setattr(
+        workflow_module,
+        "suggest_design_tokens",
+        lambda texto_uxs, contexto: DesignTokensSuggestion(colors=["primary: azul"]),
+    )
+    monkeypatch.setattr(
+        workflow_module, "define_responsive_layout", lambda texto_uxs, contexto: "notas"
+    )
+    monkeypatch.setattr(
+        workflow_module, "review_accessibility_visual", lambda screens: ["verificar contraste"]
+    )
+    monkeypatch.setattr(
+        workflow_module,
+        "draft_empty_and_error_states",
+        lambda texto_uxs, tela_nome, contexto: ([], []),
+    )
+    monkeypatch.setattr(workflow_module, "draft_interface_messages", lambda texto_uxs, contexto: [])
+    monkeypatch.setattr(
+        workflow_module,
+        "review_ui_specification",
+        lambda spec: {"aprovado": True, "problemas": []},
+    )
+
+    spec = workflow_module.generate_ui_specification("uxs")
+
+    # "calendar_today" aparece nas duas telas, mas só uma vez, na primeira ordem de ocorrência;
+    # ícones vazios nunca entram na lista.
+    assert spec.icons == ["calendar_today", "add"]
+
+
+def test_generate_ui_specification_sets_fixed_motion_notes_constant(monkeypatch):
+    """motion_notes é sempre a mesma constante estática, nunca uma chamada nova ao LLM."""
+    _stub_geracao(monkeypatch)
+    monkeypatch.setattr(
+        workflow_module,
+        "review_ui_specification",
+        lambda spec: {"aprovado": True, "problemas": []},
+    )
+
+    spec = workflow_module.generate_ui_specification("uxs")
+
+    assert spec.motion_notes == workflow_module._MOTION_NOTES
+    assert "Material Motion" in spec.motion_notes
 
 
 def test_generate_ui_specification_review_rejection_marks_pending_clarification(monkeypatch):
@@ -109,7 +276,14 @@ def _spec_completa() -> UISpecification:
         id="UI-001",
         title="t",
         context_problem="c",
-        screens=[UIScreen(name="Tela", components=["Cards"], states=["hover"], source_reference="f")],
+        screens=[
+            UIScreen(
+                name="Tela",
+                components=[ComponentSpec(name="Cards")],
+                states=[StateSpec(name="hover")],
+                source_reference="f",
+            )
+        ],
         design_tokens=DesignTokensSuggestion(colors=["primary: azul"]),
         responsive_notes="compact/medium/expanded",
         accessibility_recommendations=["verificar contraste"],
@@ -150,7 +324,7 @@ def test_finalize_ui_specification_sempre_recalcula_sintese(monkeypatch):
 
     def fake_sintese(accessibility_recommendations, review_notes):
         chamou_sintese["valor"] = True
-        return ["síntese calculada"]
+        return [PrioritizedRecommendation(priority="Alta", text="síntese calculada")]
 
     monkeypatch.setattr(workflow_module, "synthesize_recommendations", fake_sintese)
 
@@ -159,7 +333,9 @@ def test_finalize_ui_specification_sempre_recalcula_sintese(monkeypatch):
     )
 
     assert chamou_sintese["valor"] is True
-    assert resultado.recommendations_synthesis == ["síntese calculada"]
+    assert resultado.recommendations_synthesis == [
+        PrioritizedRecommendation(priority="Alta", text="síntese calculada")
+    ]
 
 
 def test_refine_and_finalize_ui_specification_revalida_e_revisa_apos_o_refino(monkeypatch):

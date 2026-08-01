@@ -50,6 +50,35 @@ uma suposição sobre a identidade do produto. `define_responsive_layout` nunca 
 número de breakpoint fora das window size classes reais do Material Design 3
 (compact/medium/expanded).
 
+## GR-UI-6 — Rascunhos de copy nunca são texto final
+
+`draft_empty_and_error_states` (estados vazio/erro por tela) e `draft_interface_messages`
+(mensagens globais da interface, ex.: um diálogo de confirmação de cancelamento) sempre
+produzem copy explicitamente rotulada como **rascunho a confirmar** com o time de
+conteúdo/produto — nunca afirmada como texto final e já aprovado para envio direto ao usuário.
+Mesmo tratamento já aplicado a design tokens em GR-UI-2.
+
+## GR-UI-7 — Nunca citar um ícone fora do catálogo fechado Material Symbols
+
+`ComponentSpec.icon` só pode existir fora de `""` se vier literalmente de
+`../../knowledge/methodology/material_symbols.md`
+(`ICONES_MATERIAL_SYMBOLS` em código, `../../src/aqua_qe_ui_designer/skills/_material_symbols_catalog.py`).
+`identify_screens_and_components` descarta qualquer ícone fora do catálogo de volta para
+`""` — mesma disciplina de catálogo fechado do GR-UI-1, agora para ícones em vez de
+componentes, com uma diferença deliberada: um ícone inválido nunca invalida o componente
+inteiro (só o campo `icon` some), porque um ícone é um detalhe de configuração do componente,
+não a sua identidade.
+
+## GR-UI-8 — `navigation_sequence` nunca deriva uma lógica de fluxo nova
+
+`UISpecification.navigation_sequence` é sempre construído em Python puro, sem chamada a
+nenhum LLM, diretamente a partir das telas que este agente já identificou
+(`[tela.name for tela in screens]`) — nunca uma re-derivação independente de fluxo de
+navegação/arquitetura da informação, o que duplicaria o artefato próprio do agente irmão
+AQuA-QE UX Designer (o User Flow da UX Specification de origem). Mesmo princípio de "nunca
+duplicar o artefato de um agente irmão" já aplicado entre Personas/Jornadas do Product Manager
+e do UX Designer.
+
 ## Guardrail transversal — Sem aprovação automática
 
 Independentemente dos guardrails acima serem satisfeitos, o agente nunca marca uma UI

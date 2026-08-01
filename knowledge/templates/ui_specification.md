@@ -16,11 +16,15 @@
 
 ## 3. Telas e Componentes
 
-`<lista de UIScreen — nome, componentes recomendados do catálogo fechado Material Design 3, origem rastreável — gerado por identify_screens_and_components (GR-UI-1: nenhum componente fora do catálogo)>`
+`<lista de UIScreen — nome, componentes recomendados do catálogo fechado Material Design 3 com variante/tamanho/ícone/notas quando fizerem sentido, origem rastreável — gerado por identify_screens_and_components (GR-UI-1: nenhum componente fora do catálogo; GR-UI-7: nenhum ícone fora do catálogo fechado Material Symbols)>`
+
+`<subseção "Hierarquia Visual" por tela — ordem nível 1→N dos elementos da tela, gerada por identify_screens_and_components>`
+
+`<subseções "Estados Vazios"/"Estados de Erro" por tela — rascunho de copy a confirmar com o time de conteúdo/produto, gerado por draft_empty_and_error_states (GR-UI-6)>`
 
 ## 4. Estados dos Componentes
 
-`<estados de interação (hover/focus/disabled/loading/error/success) por tela — gerado por define_component_states, só para telas com componentes já identificados>`
+`<estados de interação (hover/focus/disabled/loading/error/success) por tela, com o contexto real quando a UX Specification descreve um ponto assíncrono/de espera específico — gerado por define_component_states, só para telas com componentes já identificados>`
 
 ## 5. Design Tokens (Sugestão)
 
@@ -40,7 +44,23 @@
 
 ## 8. Recomendações
 
-`<síntese priorizada (3-5 itens), gerada por synthesize_recommendations combinando as recomendações de acessibilidade (seção 7) e as observações da revisão (Material Design 3 + WCAG 2.2) — nunca inclui um item que não esteja em uma das duas, é uma reordenação/resumo do que já existe, não conteúdo novo>`
+`<síntese priorizada (3-5 itens), em tabela Priority | Recomendação, ordenada Alta → Média → Baixa, gerada por synthesize_recommendations combinando as recomendações de acessibilidade (seção 7) e as observações da revisão (Material Design 3 + WCAG 2.2) — nunca inclui um item que não esteja em uma das duas, é uma reordenação/resumo do que já existe, não conteúdo novo>`
+
+## 9. Navegação
+
+`<sequência de telas já identificadas, renderizada como uma cadeia de setas (Tela A → Tela B → Tela C) — construída em Python puro a partir de screens, nunca uma nova derivação de fluxo/navegação (GR-UI-8, papel exclusivo da UX Specification de origem)>`
+
+## 10. Mensagens da Interface
+
+`<mensagens globais da interface (ex.: texto de um diálogo de confirmação, mensagem genérica de erro de conexão) — rascunho de copy a confirmar com o time de conteúdo/produto, gerado por draft_interface_messages (GR-UI-6)>`
+
+## 11. Ícones
+
+`<lista simples, deduplicada, de todo ícone Material Symbols usado nos componentes das telas — construída em Python puro, sem chamada nova ao LLM>`
+
+## 12. Movimento
+
+`<nota fixa referenciando o Material Motion do Material Design 3 — constante estática, não gerada por LLM, sem detalhamento de animações específicas nesta fase>`
 
 ## Rastreabilidade
 

@@ -1,4 +1,4 @@
-from ..models import DesignTokensSuggestion, UIScreen, UISpecification
+from ..models import ComponentSpec, DesignTokensSuggestion, StateSpec, UIScreen, UISpecification
 from ..services.llm_service import complete_json
 from ._material_design_3_catalog import COMPONENTES_MD3
 from ._normalizacao import lista_de_strings
@@ -22,7 +22,11 @@ def refine_ui_specification(spec: UISpecification, respostas: list[dict]) -> UIS
     """Reescreve os campos da UI Specification usando as respostas do usuário, preservando o
     nível de detalhe dos campos que as respostas não abordam."""
     telas_atuais = [
-        {"nome": tela.name, "componentes": tela.components, "estados": tela.states}
+        {
+            "nome": tela.name,
+            "componentes": [componente.name for componente in tela.components],
+            "estados": [estado.name for estado in tela.states],
+        }
         for tela in spec.screens
     ]
     perguntas_respostas = [f"P: {item['pergunta']}\nR: {item['resposta']}" for item in respostas]
@@ -55,20 +59,34 @@ def refine_ui_specification(spec: UISpecification, respostas: list[dict]) -> UIS
     )
     spec.responsive_notes = dados.get("notas_responsivas") or spec.responsive_notes
 
-    novas_telas = [
-        UIScreen(
-            name=item.get("nome", ""),
-            components=[
-                componente
-                for componente in lista_de_strings(item.get("componentes", []))
-                if componente in COMPONENTES_MD3
-            ],
-            states=lista_de_strings(item.get("estados", [])),
-            source_reference=spec.source_reference,
+    telas_atuais_por_nome = {tela.name: tela for tela in spec.screens}
+    novas_telas = []
+    for item in dados.get("telas", []):
+        if not isinstance(item, dict):
+            continue
+        nome = item.get("nome", "")
+        tela_atual = telas_atuais_por_nome.get(nome)
+        novas_telas.append(
+            UIScreen(
+                name=nome,
+                components=[
+                    ComponentSpec(name=componente)
+                    for componente in lista_de_strings(item.get("componentes", []))
+                    if componente in COMPONENTES_MD3
+                ],
+                states=[
+                    StateSpec(name=estado) for estado in lista_de_strings(item.get("estados", []))
+                ],
+                # Hierarquia/empty states/error states não são reabordados por este ciclo de
+                # refino (o revisor só aponta lacunas de componentes/estados/tokens/
+                # acessibilidade nesta fase) — preserva o que já existia na tela de mesmo nome,
+                # em vez de apagar detalhe que as respostas não abordaram.
+                hierarchy=tela_atual.hierarchy if tela_atual else [],
+                empty_states=tela_atual.empty_states if tela_atual else [],
+                error_states=tela_atual.error_states if tela_atual else [],
+                source_reference=spec.source_reference,
+            )
         )
-        for item in dados.get("telas", [])
-        if isinstance(item, dict)
-    ]
     spec.screens = novas_telas or spec.screens
 
     cores = lista_de_strings(dados.get("cores", []))

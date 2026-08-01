@@ -115,3 +115,42 @@ def lista_de_strings(valor, campos_prioritarios: tuple[str, ...] = ()) -> list[s
             return lista_de_strings(estrutura, campos_prioritarios)
         return [valor] if valor else []
     return []
+
+
+def lista_de_dicts(valor, campo_rotulo: str) -> list[dict]:
+    """Normaliza um valor que deveria ser uma lista de objetos (dicts) com mais de um campo
+    nomeado por item (ex.: `{"estado": "...", "contexto": "..."}`, quando uma única string por
+    item não é suficiente para capturar a estrutura pedida ao LLM) — cobre o LLM devolvendo uma
+    lista de objetos de verdade, uma lista de strings simples (cada uma vira um dict com
+    `campo_rotulo` só), um dict de chave->detalhe aninhado, ou uma string com repr de dict/list
+    embutido. `campo_rotulo` é a chave usada como rótulo principal do item quando ele chega como
+    string simples em vez de objeto (ex.: `"estado"`, `"nome"`)."""
+    if isinstance(valor, str):
+        estrutura = string_como_estrutura(valor)
+        if estrutura is not None:
+            return lista_de_dicts(estrutura, campo_rotulo)
+        return [{campo_rotulo: valor}] if valor else []
+    if isinstance(valor, dict):
+        itens = []
+        for chave, detalhe in valor.items():
+            if isinstance(detalhe, dict):
+                item = dict(detalhe)
+                item.setdefault(campo_rotulo, chave)
+                itens.append(item)
+            else:
+                itens.append({campo_rotulo: chave})
+        return itens
+    if isinstance(valor, list):
+        itens = []
+        for item in valor:
+            if isinstance(item, dict):
+                itens.append(item)
+            elif isinstance(item, str):
+                if not item:
+                    continue
+                estrutura = string_como_estrutura(item)
+                itens.append(estrutura if isinstance(estrutura, dict) else {campo_rotulo: item})
+            elif item:
+                itens.append({campo_rotulo: str(item)})
+        return itens
+    return []

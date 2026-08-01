@@ -1,5 +1,8 @@
 from dataclasses import dataclass, field
 
+from .component_spec import ComponentSpec
+from .state_spec import StateSpec
+
 
 @dataclass
 class UIScreen:
@@ -7,6 +10,9 @@ class UIScreen:
     e seus estados de interação, conforme docs/agent/output_schema.md."""
 
     name: str
-    components: list[str] = field(default_factory=list)
-    states: list[str] = field(default_factory=list)
+    components: list[ComponentSpec] = field(default_factory=list)
+    states: list[StateSpec] = field(default_factory=list)
+    hierarchy: list[str] = field(default_factory=list)
+    empty_states: list[str] = field(default_factory=list)
+    error_states: list[str] = field(default_factory=list)
     source_reference: str = ""

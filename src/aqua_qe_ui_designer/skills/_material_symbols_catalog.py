@@ -1,0 +1,50 @@
+"""Catálogo fechado de ícones Material Symbols, consultado por
+`identify_screens_and_components` (campo `ComponentSpec.icon`) — nenhuma skill deste agente
+pode citar um ícone fora desta lista (GR-UI-7, mesma disciplina de catálogo fechado do GR-UI-1,
+agora para ícones em vez de componentes). Ver
+`../../knowledge/methodology/material_symbols.md` para a referência completa (descrição de
+cada ícone).
+"""
+
+ICONES_MATERIAL_SYMBOLS: list[str] = [
+    "search",
+    "calendar_today",
+    "schedule",
+    "arrow_back",
+    "arrow_forward",
+    "close",
+    "check",
+    "check_circle",
+    "person",
+    "group",
+    "error",
+    "warning",
+    "info",
+    "add",
+    "remove",
+    "edit",
+    "delete",
+    "delete_outline",
+    "filter_list",
+    "sort",
+    "expand_more",
+    "expand_less",
+    "menu",
+    "home",
+    "notifications",
+    "settings",
+    "favorite",
+    "star",
+    "share",
+    "download",
+    "upload",
+    "visibility",
+    "visibility_off",
+    "lock",
+    "logout",
+    "login",
+    "refresh",
+    "attach_file",
+    "location_on",
+    "more_vert",
+]

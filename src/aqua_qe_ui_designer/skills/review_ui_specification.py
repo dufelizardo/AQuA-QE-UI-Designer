@@ -26,12 +26,12 @@ def _checagens_deterministicas(spec: UISpecification) -> list[str]:
     problemas = []
     for tela in spec.screens:
         for componente in tela.components:
-            if componente not in COMPONENTES_MD3:
+            if componente.name not in COMPONENTES_MD3:
                 problemas.append(
-                    f"Tela '{tela.name}': componente '{componente}' fora do catálogo fechado "
-                    "Material Design 3 (GR-UI-1)"
+                    f"Tela '{tela.name}': componente '{componente.name}' fora do catálogo "
+                    "fechado Material Design 3 (GR-UI-1)"
                 )
-        if tela.components and not tela.states:
+        if tela.components and not any(estado.name for estado in tela.states):
             problemas.append(
                 f"Tela '{tela.name}': componente(s) identificado(s) sem estados de interação definidos"
             )
@@ -48,7 +48,21 @@ def review_ui_specification(spec: UISpecification) -> dict:
 
     modelo = reviewer_model()
     telas = [
-        {"nome": tela.name, "componentes": tela.components, "estados": tela.states}
+        {
+            "nome": tela.name,
+            "componentes": [
+                {
+                    "nome": componente.name,
+                    "variante": componente.variant,
+                    "tamanho": componente.size,
+                    "icone": componente.icon,
+                }
+                for componente in tela.components
+            ],
+            "estados": [
+                {"estado": estado.name, "contexto": estado.context} for estado in tela.states
+            ],
+        }
         for tela in spec.screens
     ]
     catalogo = ", ".join(COMPONENTES_MD3)

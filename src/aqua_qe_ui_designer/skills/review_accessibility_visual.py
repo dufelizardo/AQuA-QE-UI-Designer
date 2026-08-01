@@ -18,7 +18,11 @@ def review_accessibility_visual(screens: list[UIScreen]) -> list[str]:
     if not screens:
         return []
     telas = [
-        {"nome": tela.name, "componentes": tela.components, "estados": tela.states}
+        {
+            "nome": tela.name,
+            "componentes": [componente.name for componente in tela.components],
+            "estados": [estado.name for estado in tela.states],
+        }
         for tela in screens
     ]
     prompt = f"Telas:\n{telas}\n\nResponda apenas em JSON: {{\"recomendacoes\": [\"...\"]}}"

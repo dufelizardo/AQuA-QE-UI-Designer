@@ -56,12 +56,14 @@ Entrada (UX Specification via arquivo/texto/Jira/Confluence — uma fonte, mutua
 
 - `src/aqua_qe_ui_designer/models/` — `UISpecification`, `UIScreen`, `DesignTokensSuggestion`,
   `ChatMessage`, enum `ArtifactStatus`.
-- `src/aqua_qe_ui_designer/skills/` — funções de responsabilidade única (ver
-  `docs/agent/skills.md`), mais dois auxiliares internos (não skills públicas):
+- `src/aqua_qe_ui_designer/skills/` — 24 funções de responsabilidade única (ver
+  `docs/agent/skills.md`), mais três auxiliares internos (não skills públicas):
   `_normalizacao.py` (normalização defensiva de respostas do LLM que deveriam ser uma única
-  string ou uma lista de strings simples, reutilizada por toda skill que pede isso a um LLM) e
-  `_material_design_3_catalog.py` (`COMPONENTES_MD3`, o catálogo fechado consultado por mais de
-  uma skill).
+  string, uma lista de strings simples, ou uma lista de objetos com mais de um campo nomeado
+  por item, reutilizada por toda skill que pede isso a um LLM), `_material_design_3_catalog.py`
+  (`COMPONENTES_MD3`, o catálogo fechado consultado por mais de uma skill) e
+  `_material_symbols_catalog.py` (`ICONES_MATERIAL_SYMBOLS`, o catálogo fechado de ícones
+  consultado por `identify_screens_and_components`, GR-UI-7).
 - `src/aqua_qe_ui_designer/workflow/generate_ui_specification.py` — `generate_ui_specification`,
   `finalize_ui_specification` (validate→review, sempre recomputa `recommendations_synthesis` ao
   final, mesmo se validate/review reprovarem), `refine_and_finalize_ui_specification`.
@@ -95,6 +97,20 @@ Entrada (UX Specification via arquivo/texto/Jira/Confluence — uma fonte, mutua
   realmente descreve (ou de uma referência real do Material Design 3/W3C Design Tokens) — nunca
   de uma suposição sobre a identidade do produto; `define_responsive_layout` só cita as window
   size classes reais (compact/medium/expanded), nunca um breakpoint numérico inventado.
+- **GR-UI-6**: `draft_empty_and_error_states` (estados vazio/erro por tela) e
+  `draft_interface_messages` (mensagens globais da interface) sempre rotulam sua saída como
+  rascunho de copy a confirmar com o time de conteúdo/produto — nunca texto final já aprovado.
+  Mesmo tratamento de GR-UI-2 para design tokens.
+- **GR-UI-7**: `ComponentSpec.icon` só pode vir do catálogo fechado Material Symbols
+  (`knowledge/methodology/material_symbols.md` / `skills/_material_symbols_catalog.py`) —
+  mesma disciplina de catálogo fechado do GR-UI-1, agora para ícones; um ícone inválido volta
+  para `""` sem invalidar o componente inteiro (diferente de um componente inválido, que
+  descarta a tela inteira do componente).
+- **GR-UI-8**: `UISpecification.navigation_sequence` é sempre construído em Python puro, sem
+  chamada a LLM, diretamente das telas já identificadas (`[tela.name for tela in screens]`) —
+  nunca uma re-derivação independente de fluxo/navegação, que duplicaria o artefato próprio do
+  agente irmão AQuA-QE UX Designer (mesmo princípio já aplicado entre Personas/Jornadas do
+  Product Manager e do UX Designer).
 - **Sem aprovação automática**: nenhuma skill/workflow define `ArtifactStatus.ACCEPTED`. Esse
   status só é atribuído pelo CLI (`run.py`), após confirmação humana explícita no terminal.
 - **Dois LLMs sempre diferentes**: `OLLAMA_MODEL` (padrão `mistral`) gera; `OLLAMA_REVIEW_MODEL`
@@ -152,8 +168,9 @@ Entrada (UX Specification via arquivo/texto/Jira/Confluence — uma fonte, mutua
   Skills, Evaluation, Memory (a spec formal completa do agente, escrita antes de qualquer
   código).
 - `knowledge/methodology/` — os frameworks reais que fundamentam os critérios de qualidade
-  (catálogo Material Design 3, WCAG 2.2, vocabulário núcleo do W3C Design Tokens) — nenhum
-  critério do agente foi inventado à parte desses documentos.
+  (catálogo Material Design 3, catálogo de ícones Material Symbols, WCAG 2.2, vocabulário
+  núcleo do W3C Design Tokens) — nenhum critério do agente foi inventado à parte desses
+  documentos.
 - `docs/architecture/` — diagramas visuais (draw.io + SVG) dos mesmos fluxos: arquitetura em
   camadas, fluxo da UI Specification, GR-UI-1 (catálogo fechado Material Design 3, com defesa
   em profundidade), ciclo de refinamento humano-no-loop com memória RAG e o pipeline completo

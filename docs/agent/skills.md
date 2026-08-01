@@ -8,8 +8,8 @@
 >
 > `extract_ui_context`, `identify_screens_and_components`, `define_component_states`,
 > `suggest_design_tokens`, `define_responsive_layout`, `review_accessibility_visual`,
-> `generate_ui_clarifying_questions`, `refine_ui_specification` e `synthesize_recommendations`
-> usam o LLM gerador (`../../src/aqua_qe_ui_designer/services/llm_service.py::generator_model()`;
+> `generate_ui_clarifying_questions`, `refine_ui_specification`, `synthesize_recommendations`,
+> `draft_empty_and_error_states` e `draft_interface_messages` usam o LLM gerador (`../../src/aqua_qe_ui_designer/services/llm_service.py::generator_model()`;
 > Ollama local por padrão, `OLLAMA_MODEL`/padrão `mistral` — ou um provedor em nuvem via
 > `LLM_PROVIDER`, ver `system_design.md`). `validate_ui_specification` e
 > `format_ui_specification_markdown` são Python puro, sem LLM. `review_ui_specification` usa o
@@ -104,21 +104,39 @@
 
 ## identify_screens_and_components
 
-- **Descrição**: identifica as telas de navegação descritas na UX Specification e, para cada uma, os componentes do catálogo fechado Material Design 3 (`../../knowledge/methodology/material_design_3.md`) que se aplicam. Descarta qualquer componente fora do catálogo em vez de repassá-lo adiante (GR-UI-1, o guardrail mais importante deste agente).
+- **Descrição**: identifica as telas de navegação descritas na UX Specification e, para cada uma, os componentes do catálogo fechado Material Design 3 (`../../knowledge/methodology/material_design_3.md`) que se aplicam, com variante/tamanho/ícone/notas de configuração quando fizerem sentido, e a hierarquia visual da tela (ordem nível 1→N). Descarta qualquer componente fora do catálogo em vez de repassá-lo adiante (GR-UI-1, o guardrail mais importante deste agente); qualquer ícone fora do catálogo fechado Material Symbols (`../../knowledge/methodology/material_symbols.md`) volta para `""` sem invalidar o componente inteiro (GR-UI-7).
 - **Entrada**: `texto_uxs: str`, `contexto: dict` (de `extract_ui_context`).
-- **Saída**: `list[UIScreen]` (`name`, `components: list[str]`, `source_reference`).
+- **Saída**: `list[UIScreen]` (`name`, `components: list[ComponentSpec]`, `hierarchy: list[str]`, `source_reference`).
 - **Efeitos colaterais**: chamada ao LLM gerador.
 - **Erros esperados**: resposta do LLM não é JSON válido; UX Specification sem detalhe suficiente (retorna menos telas/componentes, nunca inventa — GR-UI-5).
 - **Dependências**: consome a saída de `extract_ui_context`.
 
 ## define_component_states
 
-- **Descrição**: define, para cada tela e os componentes já identificados nela, os estados de interação relevantes (hover/focus/disabled/loading/error/success). Só roda para telas com componentes já identificados.
+- **Descrição**: define, para cada tela e os componentes já identificados nela, os estados de interação relevantes (hover/focus/disabled/loading/error/success) e o contexto real de cada um, quando o trecho de origem da tela descreve um ponto assíncrono/de espera específico (ex.: "enquanto consulta horários disponíveis"). Só roda para telas com componentes já identificados.
 - **Entrada**: `screens: list[UIScreen]`.
-- **Saída**: `list[UIScreen]` (mesmas telas, com `states` preenchido).
+- **Saída**: `list[UIScreen]` (mesmas telas, com `states: list[StateSpec]` preenchido).
 - **Efeitos colaterais**: chamada ao LLM gerador (pulada se nenhuma tela tiver componentes).
 - **Erros esperados**: resposta do LLM não é JSON válido.
 - **Dependências**: consome a saída de `identify_screens_and_components`.
+
+## draft_empty_and_error_states
+
+- **Descrição**: gera rascunhos de copy para os estados vazio (empty state) e de erro (error state) de uma tela, sempre rotulados como rascunho a confirmar com o time de conteúdo/produto (GR-UI-6) — grounded apenas em cenários de falha/vazio plausíveis a partir do propósito real da tela descrito na UX Specification.
+- **Entrada**: `texto_uxs: str`, `tela_nome: str`, `contexto: dict`.
+- **Saída**: `tuple[list[str], list[str]]` (`empty_states`, `error_states`).
+- **Efeitos colaterais**: chamada ao LLM gerador.
+- **Erros esperados**: resposta do LLM não é JSON válido.
+- **Dependências**: consome a saída de `identify_screens_and_components`/`extract_ui_context`; roda em `generate_ui_specification`, uma vez por tela.
+
+## draft_interface_messages
+
+- **Descrição**: gera rascunhos de mensagens globais da interface (ex.: o texto de um diálogo de confirmação de cancelamento, uma mensagem genérica de erro de conexão), sempre rotulados como rascunho a confirmar com o time de conteúdo/produto (GR-UI-6) — grounded apenas no que a UX Specification realmente descreve.
+- **Entrada**: `texto_uxs: str`, `contexto: dict`.
+- **Saída**: `list[str]`.
+- **Efeitos colaterais**: chamada ao LLM gerador.
+- **Erros esperados**: resposta do LLM não é JSON válido.
+- **Dependências**: consome a saída de `extract_ui_context`; roda em `generate_ui_specification`, uma vez para a especificação inteira.
 
 ## suggest_design_tokens
 
@@ -158,7 +176,7 @@
 
 ## review_ui_specification
 
-- **Descrição**: revisa a UI Specification com um LLM diferente do gerador, combinado com uma checagem determinística (Python puro) que garante GR-UI-1 mesmo se o LLM revisor não perceber um componente inválido. O catálogo fechado Material Design 3 é enviado literalmente no prompt do revisor (achado ao vivo: sem isso, o LLM julga por conhecimento geral e alucina que componentes reais do catálogo — ex. "Search Bar", "Progress Indicators" — não existem nele). Verifica também se todo componente identificado tem estados definidos (nível de tela é aceito nesta fase) e se há recomendação de acessibilidade associada às telas.
+- **Descrição**: revisa a UI Specification com um LLM diferente do gerador, combinado com uma checagem determinística (Python puro) que garante GR-UI-1 mesmo se o LLM revisor não perceber um componente inválido (checa `ComponentSpec.name` contra o catálogo, `StateSpec.name` por truthiness). O catálogo fechado Material Design 3 é enviado literalmente no prompt do revisor (achado ao vivo: sem isso, o LLM julga por conhecimento geral e alucina que componentes reais do catálogo — ex. "Search Bar", "Progress Indicators" — não existem nele), junto com a estrutura completa de cada componente (nome/variante/tamanho/ícone) e estado (nome/contexto). Verifica também se todo componente identificado tem estados definidos (nível de tela é aceito nesta fase) e se há recomendação de acessibilidade associada às telas.
 - **Entrada**: `spec: UISpecification`.
 - **Saída**: `dict` (`aprovado: bool`, `problemas: list[str]`).
 - **Efeitos colaterais**: chamada ao LLM revisor.
@@ -185,16 +203,16 @@
 
 ## synthesize_recommendations
 
-- **Descrição**: sintetiza e prioriza as 3 a 5 questões mais críticas combinando as recomendações de acessibilidade visual (`review_accessibility_visual`) e as observações da revisão (`review_ui_specification`/`validate_ui_specification`) já existentes — nunca inventa um item novo que não esteja em uma das duas listas de entrada.
+- **Descrição**: sintetiza e prioriza as 3 a 5 questões mais críticas combinando as recomendações de acessibilidade visual (`review_accessibility_visual`) e as observações da revisão (`review_ui_specification`/`validate_ui_specification`) já existentes — nunca inventa um item novo que não esteja em uma das duas listas de entrada. Cada item recebe uma prioridade "Alta"/"Média"/"Baixa"; um valor do LLM que não bata com nenhuma das três é normalizado para "Média", nunca um quarto nível inventado.
 - **Entrada**: `accessibility_recommendations: list[str]`, `review_notes: list[str]`.
-- **Saída**: `list[str]`.
+- **Saída**: `list[PrioritizedRecommendation]`.
 - **Efeitos colaterais**: chamada ao LLM gerador.
 - **Erros esperados**: resposta do LLM não é JSON válido.
 - **Dependências**: roda em `finalize_ui_specification`, depois de `review_notes` estar definido.
 
 ## format_ui_specification_markdown
 
-- **Descrição**: exporta a UI Specification em Markdown, seguindo as seções de `../../knowledge/templates/ui_specification.md`. A seção "Escopo" cita `uxs_reference` (link/chave, não o texto completo) e sempre marca `figma_file_reference` como fora de escopo nesta fase (GR-UI-4) quando vazio.
+- **Descrição**: exporta a UI Specification em Markdown, seguindo as seções de `../../knowledge/templates/ui_specification.md` (agora com hierarquia visual/estados vazios/estados de erro por tela, navegação, mensagens da interface, ícones e movimento). A seção "Escopo" cita `uxs_reference` (link/chave, não o texto completo) e sempre marca `figma_file_reference` como fora de escopo nesta fase (GR-UI-4) quando vazio. A seção de Recomendações agora é uma tabela Prioridade | Recomendação, ordenada Alta → Média → Baixa.
 - **Entrada**: `spec: UISpecification`.
 - **Saída**: `str`.
 - **Efeitos colaterais**: nenhum — Python puro, sem LLM.

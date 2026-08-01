@@ -1,4 +1,10 @@
-from aqua_qe_ui_designer.models import DesignTokensSuggestion, UIScreen, UISpecification
+from aqua_qe_ui_designer.models import (
+    ComponentSpec,
+    DesignTokensSuggestion,
+    StateSpec,
+    UIScreen,
+    UISpecification,
+)
 from aqua_qe_ui_designer.skills.validate_ui_specification import validate_ui_specification
 
 
@@ -10,8 +16,8 @@ def _spec_completa(**overrides) -> UISpecification:
         "screens": [
             UIScreen(
                 name="Agendamento",
-                components=["Cards", "Buttons"],
-                states=["hover", "disabled"],
+                components=[ComponentSpec(name="Cards"), ComponentSpec(name="Buttons")],
+                states=[StateSpec(name="hover"), StateSpec(name="disabled")],
                 source_reference="fonte",
             )
         ],
@@ -52,7 +58,7 @@ def test_screen_without_components_fails():
 def test_screen_with_components_but_no_states_fails():
     motivos = validate_ui_specification(
         _spec_completa(
-            screens=[UIScreen(name="Agendamento", components=["Cards"], states=[])]
+            screens=[UIScreen(name="Agendamento", components=[ComponentSpec(name="Cards")], states=[])]
         )
     )
     assert "tela 'Agendamento' sem estados de componente definidos" in motivos

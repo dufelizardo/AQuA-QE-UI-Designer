@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 from .design_tokens import DesignTokensSuggestion
+from .prioritized_recommendation import PrioritizedRecommendation
 from .status import ArtifactStatus
 from .ui_screen import UIScreen
 
@@ -21,4 +22,8 @@ class UISpecification:
     figma_file_reference: str = ""
     status: ArtifactStatus = ArtifactStatus.PENDING_CLARIFICATION
     review_notes: list[str] = field(default_factory=list)
-    recommendations_synthesis: list[str] = field(default_factory=list)
+    recommendations_synthesis: list[PrioritizedRecommendation] = field(default_factory=list)
+    interface_messages: list[str] = field(default_factory=list)
+    navigation_sequence: list[str] = field(default_factory=list)
+    icons: list[str] = field(default_factory=list)
+    motion_notes: str = ""

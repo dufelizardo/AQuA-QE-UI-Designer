@@ -1,21 +1,67 @@
-from ..models import UISpecification
+from ..models import ComponentSpec, PrioritizedRecommendation, StateSpec, UISpecification
+
+_ORDEM_PRIORIDADE = {"Alta": 0, "Média": 1, "Baixa": 2}
 
 
 def _lista_md(itens: list[str]) -> str:
     return "\n".join(f"- {item}" for item in itens) if itens else "(nenhum)"
 
 
+def _componente_md(componente: ComponentSpec) -> str:
+    detalhe = ", ".join(parte for parte in (componente.variant, componente.size) if parte)
+    texto = f"{componente.name} ({detalhe})" if detalhe else componente.name
+    extras = []
+    if componente.icon:
+        extras.append(f"ícone: {componente.icon}")
+    if componente.notes:
+        extras.append(f"nota: {componente.notes}")
+    return f"{texto} — {'; '.join(extras)}" if extras else texto
+
+
+def _componentes_md(componentes: list[ComponentSpec]) -> str:
+    if not componentes:
+        return "(nenhum identificado)"
+    return "\n".join(f"- {_componente_md(componente)}" for componente in componentes)
+
+
+def _hierarquia_md(hierarquia: list[str]) -> str:
+    if not hierarquia:
+        return "(não definida)"
+    return "\n".join(f"{nivel}. {item}" for nivel, item in enumerate(hierarquia, start=1))
+
+
 def _telas_e_componentes_md(spec: UISpecification) -> str:
     if not spec.screens:
         return "(nenhuma)"
-    linhas = []
+    blocos = []
     for tela in spec.screens:
-        componentes = ", ".join(tela.components) if tela.components else "(nenhum identificado)"
-        linhas.append(f"### {tela.name}")
-        linhas.append("")
-        linhas.append(f"Componentes (Material Design 3): {componentes}")
-        linhas.append("")
-    return "\n".join(linhas).rstrip()
+        linhas = [
+            f"### {tela.name}",
+            "",
+            "**Componentes (Material Design 3)**",
+            "",
+            _componentes_md(tela.components),
+            "",
+            "**Hierarquia Visual**",
+            "",
+            _hierarquia_md(tela.hierarchy),
+            "",
+            "**Estados Vazios** (rascunho de copy a confirmar com o time de conteúdo/produto "
+            "— GR-UI-6)",
+            "",
+            _lista_md(tela.empty_states),
+            "",
+            "**Estados de Erro** (rascunho de copy a confirmar com o time de conteúdo/produto "
+            "— GR-UI-6)",
+            "",
+            _lista_md(tela.error_states),
+        ]
+        blocos.append("\n".join(linhas))
+    return "\n\n".join(blocos)
+
+
+def _estado_md(estado: StateSpec) -> str:
+    return f"{estado.name} — {estado.context}" if estado.context else estado.name
 
 
 def _estados_md(spec: UISpecification) -> str:
@@ -23,7 +69,11 @@ def _estados_md(spec: UISpecification) -> str:
         return "(nenhum)"
     linhas = []
     for tela in spec.screens:
-        estados = ", ".join(tela.states) if tela.states else "(nenhum definido)"
+        estados = (
+            ", ".join(_estado_md(estado) for estado in tela.states)
+            if tela.states
+            else "(nenhum definido)"
+        )
         linhas.append(f"- **{tela.name}**: {estados}")
     return "\n".join(linhas)
 
@@ -38,6 +88,23 @@ def _design_tokens_md(spec: UISpecification) -> str:
         f"- **Tipografia** (sugestão a confirmar): {tipografia}\n"
         f"- **Espaçamento** (sugestão a confirmar): {espacamento}"
     )
+
+
+def _recomendacoes_md(recomendacoes: list[PrioritizedRecommendation]) -> str:
+    if not recomendacoes:
+        return "(nenhuma)"
+    ordenadas = sorted(
+        recomendacoes, key=lambda item: _ORDEM_PRIORIDADE.get(item.priority, 1)
+    )
+    linhas = ["| Prioridade | Recomendação |", "|---|---|"]
+    linhas.extend(f"| {item.priority} | {item.text} |" for item in ordenadas)
+    return "\n".join(linhas)
+
+
+def _navegacao_md(spec: UISpecification) -> str:
+    if not spec.navigation_sequence:
+        return "(nenhuma)"
+    return " → ".join(spec.navigation_sequence)
 
 
 _TRECHO_MAX_CARACTERES = 200
@@ -89,9 +156,21 @@ def format_ui_specification_markdown(spec: UISpecification) -> str:
         "(GR-UI-3).\n\n"
         f"{_lista_md(spec.accessibility_recommendations)}\n\n"
         "## 8. Recomendações\n\n"
-        "> Síntese priorizada combinando as recomendações de acessibilidade (seção 7) e as "
-        "observações da revisão (Material Design 3 + WCAG 2.2, seção de rastreabilidade abaixo) "
-        "— nunca inclui um item que não esteja em uma das duas.\n\n"
-        f"{_lista_md(spec.recommendations_synthesis)}\n\n"
+        "> Síntese priorizada (Alta → Média → Baixa) combinando as recomendações de "
+        "acessibilidade (seção 7) e as observações da revisão (Material Design 3 + WCAG 2.2, "
+        "seção de rastreabilidade abaixo) — nunca inclui um item que não esteja em uma das "
+        "duas.\n\n"
+        f"{_recomendacoes_md(spec.recommendations_synthesis)}\n\n"
+        "## 9. Navegação\n\n"
+        "> Restatement direto da sequência de telas já identificada — este agente nunca deriva "
+        "uma lógica de fluxo/navegação nova, isso é responsabilidade exclusiva da UX "
+        "Specification de origem (GR-UI-8).\n\n"
+        f"{_navegacao_md(spec)}\n\n"
+        "## 10. Mensagens da Interface\n\n"
+        "> Rascunho de copy a confirmar com o time de conteúdo/produto — nunca copy final "
+        "(GR-UI-6).\n\n"
+        f"{_lista_md(spec.interface_messages)}\n\n"
+        f"## 11. Ícones\n\n{_lista_md(spec.icons)}\n\n"
+        f"## 12. Movimento\n\n{spec.motion_notes or '(nenhuma nota)'}\n\n"
         f"## Rastreabilidade\n\n{_rastreabilidade_md(spec)}\n"
     )

@@ -115,3 +115,55 @@ def test_lista_de_strings_string_com_repr_de_lista_embutido():
 
 def test_lista_de_strings_valor_de_tipo_inesperado_retorna_vazio():
     assert m.lista_de_strings(123) == []
+
+
+def test_lista_de_dicts_lista_de_objetos_passa_direto():
+    valor = [{"estado": "hover", "contexto": ""}, {"estado": "loading", "contexto": "espera"}]
+    assert m.lista_de_dicts(valor, "estado") == valor
+
+
+def test_lista_de_dicts_lista_de_strings_simples_vira_dict_com_campo_rotulo():
+    assert m.lista_de_dicts(["hover", "disabled"], "estado") == [
+        {"estado": "hover"},
+        {"estado": "disabled"},
+    ]
+
+
+def test_lista_de_dicts_item_string_com_repr_de_dict_embutido():
+    valor = ["{'estado': 'hover', 'contexto': 'ao carregar'}"]
+    assert m.lista_de_dicts(valor, "estado") == [{"estado": "hover", "contexto": "ao carregar"}]
+
+
+def test_lista_de_dicts_ignora_item_de_lista_falsy():
+    assert m.lista_de_dicts(["hover", "", None], "estado") == [{"estado": "hover"}]
+
+
+def test_lista_de_dicts_dict_de_chave_para_detalhe_aninhado():
+    valor = {"hover": {"contexto": "ao passar o mouse"}}
+    assert m.lista_de_dicts(valor, "estado") == [{"estado": "hover", "contexto": "ao passar o mouse"}]
+
+
+def test_lista_de_dicts_dict_de_chave_para_valor_simples():
+    valor = {"hover": "", "disabled": ""}
+    assert m.lista_de_dicts(valor, "estado") == [{"estado": "hover"}, {"estado": "disabled"}]
+
+
+def test_lista_de_dicts_string_com_repr_de_lista_embutido():
+    valor = "['hover', 'disabled']"
+    assert m.lista_de_dicts(valor, "estado") == [{"estado": "hover"}, {"estado": "disabled"}]
+
+
+def test_lista_de_dicts_string_simples_vira_lista_de_um_item():
+    assert m.lista_de_dicts("hover", "estado") == [{"estado": "hover"}]
+
+
+def test_lista_de_dicts_string_vazia_vira_lista_vazia():
+    assert m.lista_de_dicts("", "estado") == []
+
+
+def test_lista_de_dicts_valor_de_tipo_inesperado_retorna_vazio():
+    assert m.lista_de_dicts(123, "estado") == []
+
+
+def test_lista_de_dicts_item_de_lista_de_tipo_inesperado_mas_truthy():
+    assert m.lista_de_dicts([1, 2], "estado") == [{"estado": "1"}, {"estado": "2"}]
