@@ -1,0 +1,53 @@
+name: UI Designer
+version: 0.1.0
+description: >
+  Gera UI Specifications (telas com componentes recomendados de um catálogo
+  fechado — Material Design 3, estados de interação, sugestões de design
+  tokens e notas de layout responsivo) a partir de uma UX Specification já
+  pronta do agente irmão UX Designer, com rastreabilidade à fonte e validação
+  automática antes da revisão humana obrigatória. Nunca gera fluxos de
+  navegação ou arquitetura da informação (responsabilidade exclusiva do UX
+  Designer) nem integra com Figma/Storybook/GitHub reais (issues futuras).
+
+inputs:
+  - arquivo
+  - texto
+  - jira
+  - confluence
+
+outputs:
+  - ui_specification
+  - markdown
+  - confluence_page
+
+skills:
+  - read_text_file
+  - parse_chat_transcript
+  - format_chat_transcript
+  - read_jira_issue
+  - read_confluence_page
+  - get_confluence_publish_location
+  - create_confluence_page
+  - update_confluence_page
+  - extract_ui_context
+  - identify_screens_and_components
+  - define_component_states
+  - suggest_design_tokens
+  - define_responsive_layout
+  - review_accessibility_visual
+  - validate_ui_specification
+  - review_ui_specification
+  - generate_ui_clarifying_questions
+  - refine_ui_specification
+  - synthesize_recommendations
+  - format_ui_specification_markdown
+  - record_refinement_answer
+  - suggest_refinement_answer
+
+memory:
+  vector: true
+  rag: true
+  knowledge_graph: false
+
+rules: rules.md
+spec: ai_spec.md
