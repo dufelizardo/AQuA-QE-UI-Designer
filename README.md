@@ -7,6 +7,20 @@ An agent that generates **UI Specifications** — screens with recommended compo
 **What's the benefit**: components only from a real, closed catalog (Material Design 3, never invented), design tokens always labeled "suggestion to confirm," draft copy always labeled as such — a defensible starting point, never a guess presented as final.
 **How it works (high level)**: UX Specification → screens/components/states/tokens/responsive/accessibility → validate → review (deterministic catalog check + an independent LLM) → [refine] → human accepts.
 
+## Example
+
+**Input**: a UX Specification (file/text/Jira/Confluence).
+
+**Output** — a real UI Specification generated live this way ("Agendamento Assistido Presencial"), with these sections:
+
+```
+1. Objetivo            5. Design Tokens (Sugestão)   9. Navegação
+2. Escopo              6. Layout Responsivo          10. Mensagens da Interface
+3. Telas e Componentes 7. Recomendações de           11. Ícones
+4. Estados dos            Acessibilidade Visual      12. Movimento
+   Componentes         8. Recomendações               Rastreabilidade
+```
+
 **Status**: Phase 1 (core) implemented — no Figma/Storybook/GitHub integration yet (separate future issues), following the same generate→validate→review→human-accept pattern already used by the four sibling agents.
 
 This project has its own git repository, independent from the root monorepo (per the "every new project gets its own repository" convention — see the root `CLAUDE.md`).

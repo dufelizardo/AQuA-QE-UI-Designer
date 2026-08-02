@@ -18,6 +18,21 @@ rotulada como tal — um ponto de partida defensável, nunca uma suposição apr
 acessibilidade → valida → revisa (checagem determinística do catálogo + um LLM independente) →
 [refina] → aceite humano.
 
+## Exemplo
+
+**Entrada**: uma UX Specification (arquivo/texto/Jira/Confluence).
+
+**Saída** — uma UI Specification real gerada ao vivo desta forma ("Agendamento Assistido
+Presencial"), com estas seções:
+
+```
+1. Objetivo            5. Design Tokens (Sugestão)   9. Navegação
+2. Escopo              6. Layout Responsivo          10. Mensagens da Interface
+3. Telas e Componentes 7. Recomendações de           11. Ícones
+4. Estados dos             Acessibilidade Visual     12. Movimento
+   Componentes         8. Recomendações               Rastreabilidade
+```
+
 **Status**: Fase 1 (núcleo) implementada — sem integração com Figma/Storybook/GitHub ainda
 (issues futuras separadas), seguindo o mesmo padrão gerar→validar→revisar→aceite humano já
 usado nos quatro agentes irmãos.
