@@ -1,5 +1,7 @@
 # AQuA-QE UI Designer
 
+![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue) ![Arquitetura: humano-no-loop](https://img.shields.io/badge/arquitetura-humano--no--loop-blueviolet)
+
 Agente que gera **UI Specifications** — telas com componentes recomendados de um catálogo
 fechado de design system (Material Design 3), estados de componente, sugestões de design
 tokens, notas de layout responsivo e recomendações de acessibilidade visual — a partir de uma

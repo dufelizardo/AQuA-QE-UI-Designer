@@ -1,5 +1,7 @@
 # AQuA-QE UI Designer
 
+![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue) ![Architecture: human-in-the-loop](https://img.shields.io/badge/architecture-human--in--the--loop-blueviolet)
+
 An agent that generates **UI Specifications** — screens with recommended components from a closed design system catalog (Material Design 3), component states, suggested design tokens, responsive layout notes, and visual accessibility recommendations — from an already-finished UX Specification produced by the [AQuA-QE UX Designer](https://github.com/dufelizardo/AQuA-QE-UX-Designer). With mandatory traceability to source, automatic validation, and human review at the center of the cycle. See `WHITEPAPER.en.md` for the full picture.
 
 **What problem it solves**: turns an accepted UX Specification into implementation-ready screen/component detail, instead of a blank Figma file.
