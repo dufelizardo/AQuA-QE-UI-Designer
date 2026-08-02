@@ -7,6 +7,17 @@ UX Specification já pronta do agente irmão [AQuA-QE UX Designer](https://githu
 Com rastreabilidade obrigatória à fonte, validação automática e revisão humana no centro do
 ciclo. Ver `WHITEPAPER.md` para a visão completa.
 
+**Qual problema resolve**: transforma uma UX Specification aceita em detalhe de tela/componente
+pronto para implementação, em vez de um arquivo Figma em branco.
+**Quem usa**: UI designers e desenvolvedores front-end que precisam de um ponto de partida
+fundamentado para o design visual (componentes, estados, tokens, notas responsivas/acessibilidade).
+**Qual o benefício**: componentes só de um catálogo real e fechado (Material Design 3, nunca
+inventado), design tokens sempre rotulados "sugestão a confirmar", copy de rascunho sempre
+rotulada como tal — um ponto de partida defensável, nunca uma suposição apresentada como definitiva.
+**Como funciona (alto nível)**: UX Specification → telas/componentes/estados/tokens/responsivo/
+acessibilidade → valida → revisa (checagem determinística do catálogo + um LLM independente) →
+[refina] → aceite humano.
+
 **Status**: Fase 1 (núcleo) implementada — sem integração com Figma/Storybook/GitHub ainda
 (issues futuras separadas), seguindo o mesmo padrão gerar→validar→revisar→aceite humano já
 usado nos quatro agentes irmãos.

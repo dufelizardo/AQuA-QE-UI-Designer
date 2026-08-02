@@ -2,6 +2,11 @@
 
 An agent that generates **UI Specifications** — screens with recommended components from a closed design system catalog (Material Design 3), component states, suggested design tokens, responsive layout notes, and visual accessibility recommendations — from an already-finished UX Specification produced by the [AQuA-QE UX Designer](https://github.com/dufelizardo/AQuA-QE-UX-Designer). With mandatory traceability to source, automatic validation, and human review at the center of the cycle. See `WHITEPAPER.en.md` for the full picture.
 
+**What problem it solves**: turns an accepted UX Specification into implementation-ready screen/component detail, instead of a blank Figma file.
+**Who uses it**: UI designers and front-end developers who need a grounded starting point for visual design (components, states, tokens, responsive/accessibility notes).
+**What's the benefit**: components only from a real, closed catalog (Material Design 3, never invented), design tokens always labeled "suggestion to confirm," draft copy always labeled as such — a defensible starting point, never a guess presented as final.
+**How it works (high level)**: UX Specification → screens/components/states/tokens/responsive/accessibility → validate → review (deterministic catalog check + an independent LLM) → [refine] → human accepts.
+
 **Status**: Phase 1 (core) implemented — no Figma/Storybook/GitHub integration yet (separate future issues), following the same generate→validate→review→human-accept pattern already used by the four sibling agents.
 
 This project has its own git repository, independent from the root monorepo (per the "every new project gets its own repository" convention — see the root `CLAUDE.md`).
